@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orion.mapper.CartMapper">
+
+    <!--指定实体属性与表字段映射关系-->
+    <resultMap id="BaseResultMap" type="com.orion.pojo.Cart">
+        <id property="userId" column="user_id" jdbcType="VARCHAR"/>
+        <id property="freshId" column="fresh_id" jdbcType="VARCHAR"/>
+        <!--对多表连接查询-->
+        <association property="fresh" javaType="fresh">
+            <id property="id" column="id" jdbcType="VARCHAR"/>
+        </association>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        user_id,fresh_id,count,
+        purchase_time,version
+    </sql>
+
+    <!--获取用户购物车生鲜-->
+    <select id="getUserCart" resultMap="BaseResultMap">
+        select *
+        from (select *
+              from fresh_system.cart
+              where user_id = #{userId}) c
+                 inner join fresh_system.fresh f
+                            on c.fresh_id = f.id
+    </select>
+
+    <select id="selectUserCartItemIds" resultType="java.lang.Integer">
+        SELECT fresh_id
+        FROM fresh_system.cart
+        WHERE user_id = #{userId}
+    </select>
+</mapper>

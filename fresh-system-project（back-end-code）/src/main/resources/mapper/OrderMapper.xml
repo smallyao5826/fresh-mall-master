@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orion.mapper.OrderMapper">
+
+    <!-- 订单VO结果映射 -->
+    <resultMap id="orderVOResultMap" type="com.orion.pojo.vo.OrderVO">
+        <result property="orderNumber" column="order_number"/>
+        <result property="status" column="status"/>
+        <result property="sumPrices" column="sum_prices"/>
+        <result property="createTime" column="create_time"/>
+        <result property="shippingFee" column="shipping_fee"/>
+        <result property="paymentMethod" column="payment_method"/>
+        <result property="paymentTime" column="payment_time"/>
+        <result property="remark" column="remark"/>
+
+
+        <!-- 地址信息映射 -->
+        <association property="address" javaType="com.orion.pojo.vo.AddressVO">
+            <result property="name" column="name"/>
+            <result property="phone" column="phone"/>
+            <result property="province" column="province"/>
+            <result property="city" column="city"/>
+            <result property="district" column="district"/>
+            <result property="detailedAddress" column="detailed_address"/>
+        </association>
+
+        <!-- 商品详情映射 -->
+        <collection property="details" ofType="com.orion.pojo.vo.OrderDetailVO">
+            <result property="freshId" column="fresh_id"/>
+            <result property="freshName" column="fresh_name"/>
+            <result property="pictureAddress" column="picture_address"/>
+            <result property="count" column="count"/>
+            <result property="price" column="actual_price"/>
+            <result property="originalPrice" column="original_price"/>
+
+        </collection>
+    </resultMap>
+
+    <!-- 分页查询用户订单 -->
+    <select id="selectOrderVOs" resultMap="orderVOResultMap">
+        SELECT
+        o.order_number,
+        o.status,
+        o.sum_prices,
+        o.create_time,
+        o.shipping_fee,
+        o.payment_method,
+        o.payment_time,
+        o.remark,
+
+        -- 地址信息
+        a.name,
+        a.phone,
+        a.province,
+        a.city,
+        a.district,
+        a.detailed_address,
+
+        -- 商品详情
+        od.fresh_id,
+        f.fresh_name,
+        f.picture_address,
+        od.count,
+        f.prices AS original_price,
+        CASE
+        WHEN f.promotion_price &gt; 0 AND f.promotion_price &lt; f.prices
+        THEN f.promotion_price
+        ELSE f.prices
+        END AS actual_price
+
+        FROM `order` o
+        LEFT JOIN address a ON o.address_id = a.id
+        LEFT JOIN order_detail od ON o.order_id = od.order_id
+        LEFT JOIN fresh f ON od.fresh_id = f.id
+        WHERE o.user_id = #{userId}
+        AND o.is_deleted = 0
+        <if test="search != null and search != ''">
+            AND (o.order_number LIKE CONCAT('%', #{search}, '%')
+            OR f.fresh_name LIKE CONCAT('%', #{search}, '%'))
+        </if>
+        ORDER BY
+        CASE WHEN o.status = '待发货' THEN 0 ELSE 1 END,
+        o.create_time DESC
+    </select>
+
+    <select id="queryOrders" resultMap="orderVOResultMap">
+        SELECT
+        o.order_number,
+        o.status,
+        o.sum_prices,
+        o.create_time,
+        o.shipping_fee,
+        o.payment_method,
+        o.payment_time,
+        o.remark,
+        a.name,
+        a.phone,
+        a.province,
+        a.city,
+        a.district,
+        a.detailed_address,
+        od.fresh_id,
+        f.fresh_name,
+        f.picture_address,
+        od.count,
+        f.prices AS original_price,
+        CASE
+        WHEN f.promotion_price &gt; 0 AND f.promotion_price &lt; f.prices
+        THEN f.promotion_price
+        ELSE f.prices
+        END AS actual_price
+        FROM (
+        SELECT order_id
+        FROM `order` main_order  <!-- 给子查询表定义别名 -->
+        <where>
+            main_order.is_deleted = 0  <!-- 使用子查询别名 -->
+            <if test="status != null and status != 'all'">
+                AND main_order.status = #{status}  <!-- 使用子查询别名 -->
+            </if>
+            <if test="search != null and search != ''">
+                AND (main_order.order_number LIKE CONCAT('%', #{search}, '%')
+                OR EXISTS (
+                SELECT 1 FROM address sub_addr  <!-- 子查询别名隔离 -->
+                WHERE sub_addr.id = main_order.address_id
+                AND sub_addr.name LIKE CONCAT('%', #{search}, '%')
+                ))
+            </if>
+        </where>
+        ORDER BY main_order.create_time DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+        ) AS main
+        INNER JOIN `order` o ON main.order_id = o.order_id
+        LEFT JOIN address a ON o.address_id = a.id
+        LEFT JOIN order_detail od ON o.order_id = od.order_id
+        LEFT JOIN fresh f ON od.fresh_id = f.id
+        ORDER BY
+        CASE WHEN o.status = '待发货' THEN 0 ELSE 1 END,  <!-- 新增排序条件 -->
+        o.create_time DESC  <!-- 修改为降序 -->
+    </select>
+
+
+    <select id="queryOrdersCount" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT main_order.order_id)
+        FROM `order` main_order  <!-- 统一使用别名 -->
+        <where>
+            main_order.is_deleted = 0
+            <if test="status != null and status != 'all'">
+                AND main_order.status = #{status}
+            </if>
+            <if test="search != null and search != ''">
+                AND (main_order.order_number LIKE CONCAT('%', #{search}, '%')
+                OR EXISTS (
+                SELECT 1 FROM address sub_addr  <!-- 子查询别名隔离 -->
+                WHERE sub_addr.id = main_order.address_id
+                AND sub_addr.name LIKE CONCAT('%', #{search}, '%')
+                ))
+            </if>
+        </where>
+    </select>
+
+    <select id="selectOrderDetailByNumber" resultMap="orderVOResultMap">
+        SELECT
+            o.order_number,
+            o.status,
+            o.sum_prices,
+            o.create_time,
+            o.shipping_fee,
+            o.payment_method,
+            o.payment_time,
+            o.remark,
+            a.name,
+            a.phone,
+            a.province,
+            a.city,
+            a.district,
+            a.detailed_address,
+            od.fresh_id,
+            f.fresh_name,
+            f.picture_address,
+            od.count,
+            f.prices AS original_price,
+            CASE
+                WHEN f.promotion_price &gt; 0 AND f.promotion_price &lt; f.prices
+                    THEN f.promotion_price
+                ELSE f.prices
+                END AS actual_price
+        FROM `order` o
+                 LEFT JOIN address a ON o.address_id = a.id
+                 LEFT JOIN order_detail od ON o.order_id = od.order_id
+                 LEFT JOIN fresh f ON od.fresh_id = f.id
+        WHERE o.user_id = #{userId, jdbcType=INTEGER}
+          AND o.is_deleted = 0
+          AND o.order_number = #{orderNumber, jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectByOrderNumber" resultType="com.orion.pojo.Order" parameterType="java.lang.String">
+        SELECT
+            order_id AS orderId,
+            order_number AS orderNumber,
+            status,
+            user_id AS userId,
+            address_id AS addressId,
+            sum_prices AS sumPrices,
+            shipping_fee AS shippingFee,
+            payment_method AS paymentMethod,
+            payment_time AS paymentTime,
+            create_time AS createTime,
+            version
+        FROM `order`
+        WHERE order_number = #{orderNumber}
+          AND is_deleted = 0
+    </select>
+
+
+</mapper>

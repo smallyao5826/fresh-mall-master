@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orion.mapper.SlideshowMapper">
+
+    <resultMap id="BaseResultMap" type="slideshow">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,picture_address,
+        create_time,update_time,is_deleted
+    </sql>
+
+    <!--分页条件查询所有轮播图-->
+    <select id="pageSlidesAll" resultMap="BaseResultMap">
+        select s.id, s.picture_address, s.create_time, s.update_time
+        from(select *
+        from fresh_system.slideshow
+        where is_deleted = false) s
+        order by s.update_time desc
+    </select>
+</mapper>

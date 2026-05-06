@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orion.mapper.CategoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.orion.pojo.Category">
+        <id property="id" column="id" jdbcType="INTEGER"/>
+        <result property="categoryName" column="category_name" jdbcType="VARCHAR"/>
+        <result property="userId" column="user_id" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="isDeleted" column="is_deleted" jdbcType="BIT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,category_name,user_id,
+        create_time,update_time,is_deleted
+    </sql>
+
+    <!--多表连接获取所有分类信息-->
+    <select id="getAll" resultType="java.util.Map">
+        select a.id,
+        a.category_name "categoryName",
+        date_format(a.create_time,'%Y-%m-%d %H:%i:%s') "createTime",
+        date_format(a.update_time,'%Y-%m-%d %H:%i:%s') "updateTime"
+        FROM category a
+        <where>
+            a.is_deleted = 0
+            <if test="search !=null and search != ''">
+                and a.category_name like '%${search}%'
+            </if>
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orion.mapper.RecommendConfigMapper">
+
+    <!-- 显式结果映射 -->
+    <resultMap id="configMap" type="java.util.HashMap">
+        <result property="key" column="param_name" javaType="string"/>
+        <result property="value" column="param_value" javaType="double"/>
+    </resultMap>
+
+    <select id="getConfigParams" resultType="map">
+        SELECT
+        param_name AS config_key,  <!-- 避免使用保留字 -->
+        param_value AS config_value
+        FROM recommend_config
+    </select>
+
+    <update id="upsertParam">
+        INSERT INTO recommend_config
+        (param_name, param_value)
+        VALUES
+        (#{key}, #{value})
+        ON DUPLICATE KEY UPDATE
+        param_value = #{value}  <!-- 保持参数引用方式 -->
+    </update>
+
+</mapper>

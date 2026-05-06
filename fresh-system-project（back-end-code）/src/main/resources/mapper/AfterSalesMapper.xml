@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orion.mapper.AfterSalesMapper">
+
+    <!-- 定义resultMap -->
+    <resultMap id="AfterSalesVOResultMap" type="com.orion.pojo.vo.AfterSalesVO">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="orderNumber" property="orderNumber" jdbcType="VARCHAR"/>
+        <result column="userId" property="userId" jdbcType="INTEGER"/>
+        <result column="serviceType" property="serviceType" jdbcType="VARCHAR"/>
+        <result column="applyReason" property="applyReason" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="processResult" property="processResult" jdbcType="VARCHAR"/>
+        <result column="processComment" property="processComment" jdbcType="VARCHAR"/>
+        <result column="applyTime" property="applyTime" jdbcType="TIMESTAMP"/>
+        <result column="processTime" property="processTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <select id="selectAfterSalesWithOrder" resultMap="AfterSalesVOResultMap">
+        SELECT
+        a.id,
+        o.order_number AS orderNumber,
+        a.user_id AS userId,
+        a.service_type AS serviceType,
+        a.apply_reason AS applyReason,
+        a.status,
+        a.process_result AS processResult,
+        a.process_comment AS processComment,
+        a.apply_time AS applyTime,
+        a.process_time AS processTime
+        FROM after_sales a
+        LEFT JOIN `order` o ON a.order_id = o.order_id
+        <where>
+            <!-- 查询条件 -->
+            <if test="orderNumber != null and orderNumber != ''">
+                AND o.order_number = #{orderNumber}
+            </if>
+            <if test="serviceType != null and serviceType != ''">
+                AND a.service_type = #{serviceType}
+            </if>
+            <if test="status != null and status != ''">
+                AND a.status = #{status}
+            </if>
+            <if test="startTime != null and endTime != null">
+                AND a.apply_time BETWEEN #{startTime} AND #{endTime}
+            </if>
+        </where>
+        ORDER BY a.apply_time DESC
+    </select>
+</mapper>

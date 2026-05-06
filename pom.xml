@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--使项目成为一个springboot工程(继承父工程)
+   1、依赖管理-启动器版本统计控制
+   2、插件管理-插件版本统一控制
+   3、Springboot配置文件名约定必须以application开头
+   -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.4</version>
+    </parent>
+
+    <!--
+    指定本项目属性
+    g：项目所属组织（公司域名倒写）
+    a: 项目工件ID即项目打包后的名字
+    v: 项目打包后的版本号
+    p: java-普通的java项目
+       war-web项目
+       pom-项目不打包作为父项目进行对子服务模块依赖管理、聚合构建管理。
+    -->
+    <groupId>com.orion</groupId>
+    <artifactId>Community-fresh-distribution-system</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <!--指定其项目下的子工程模块（目录名）-->
+    <modules>
+        <module>fresh-system-project（back-end-code）</module>
+    </modules>
+
+    <!--定义值可以被引用的属性标签-->
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!--统一更新子工程打包插件：添加springboot单体应用打包插件-->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

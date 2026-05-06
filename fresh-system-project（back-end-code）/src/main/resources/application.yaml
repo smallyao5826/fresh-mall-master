@@ -1,0 +1,67 @@
+#服务器设置
+server:
+  port: 8080    #设置tomcat服务监听的端口号（优先级最低）
+  servlet:
+    context-path: "/"  #设置项目访问的虚拟目录
+
+#数据库连接池信息设置
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: "root"
+    password: "root"
+    url: "jdbc:mysql://127.0.0.1:3306/fresh_system?allowMultiQueries=true"  #allowMultiQueries在动态SQL中允许foreach标签执行多语句;
+
+  data: #redis数据库连接信息配置
+    redis:
+      host: "localhost"
+      port: 6379
+
+  servlet:
+    multipart:
+      max-file-size: 200MB   #单个文件上传最大大小限制
+      max-request-size: 1GB  #一个请求中多文件上传总共大小最大限制
+
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+    deserialization:
+      READ_DATE_TIMESTAMPS_AS_NANOSECONDS: false
+    time-zone: GMT+8
+
+#mybatis-plus配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  global-config:
+    db-config:
+      id-type: auto   #在向表中插入数据时使用雪花算法来自动生成ID（主键策略）
+      logic-delete-field: isDeleted   #全局指定逻辑删除字段(0未删除状态，1已删除状态)
+      logic-not-delete-value: 0
+      logic-delete-value: 1
+
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  #将数据库查询的信息输出到控制台
+    map-underscore-to-camel-case: true   #开启数据库字段名到实体类属性的驼峰自动转化
+    auto-mapping-behavior: full  #在多表连接查询中设置ResultMap对连接的其它实体类普通字段也进行值映射(默认为单表普通列自动映射)。
+    call-setters-on-nulls: true
+  type-aliases-package: com.orion.pojo  #将指定包下的类起别名（xml映射文件中类型别名指定无需包含实体类全路径）#指定mapper映射文件位置
+
+#腾讯云配置
+tencent:
+  cos:
+    secret-id: ${TENCENT_COS_SECRET_ID:your-secret-id}
+    secret-key: ${TENCENT_COS_SECRET_KEY:your-secret-key}
+    region: ap-guangzhou
+    bucket-name: ${TENCENT_COS_BUCKET_NAME:your-bucket-name}
+
+#支付宝沙箱配置
+alipay:
+  appId: 2021000147677165
+  appPrivateKey: |
+    MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCYgfvKxMFZ3dZFO1+86GeOcBICSLLHbLQh0ixVkBnI3gwhPpA6IhpmPZOAeZho/XOpJ//aqfLQF4CGn83+LCrzxg97UFbxqBHMwlLaL1nzNg6tDpeFWKnM69cNdT7kfY7Y1VrgmQEBm4cYkox8S382qRNRJTGKG8aFfUVQ749utayHvRJybEoc4u0/r4VrGuazbIMumdi37ww7kT72C99WSbnSd/U81EZd8HjvOkoSMLzMHvDqqwEMEOLtuLK3gWrGTFar/lTXBjryFdwdLfS22Ehvnn8sixPp4953ce4VonAoe+W2hLc0ZLrNu19aLXZtRkYvM0UAOX57Ez4id2k9AgMBAAECggEAXYiK5sdZVkZp3bgWdYOLz54ITYJMs2aF66A9NJTWW41jnxgB2MWFr2LgjhEFWo7nWr1/e5pzoxBm8Sodal+oUC4O3LBfQoKzuAMOUWZtIm7q/VRPtaa1LUsPb9+SnQwsiewAenMcXOIILxfiNXEQKnPztva6tVtnnANCeesS6vBqSjI5/ZbG5sjSRd+FjvdeVwzSILQ0ZBpDi5VkmZVrLBpQI/SrQMPsjXrOHT8Q3+P+vfu2ltm1Mq/9tRSsUZMJ9qWojYGvLFZRR++N6GLlKopuGdcsEnIFWTrM6dKQvLbgY27rcMGMdfnuVjLqbqRuzaa69wghES+X0Eq2/1wowQKBgQDUXsPQ/oACto4CBAPNLNaSJ6vl3KqcaaTbHEWG07qe51DZEgpAgR40mQm+XC1eMiaBhjrDPexrkZeDYkmpjyyUSiK1YpQ2VykqGfbfTduIv8QUPsJNTQID6vBMudexDqDSDGTYmOKZvJvH9o7Gi3C0TEPCK01zWLUoj7KnKdf1mQKBgQC31twcBDDvThR07ccizt2DAyPtSyscaEjK/PkZF1ZAxIm/h1fqernep4s1EJdB93kGSDt1AVZLuLsgGfwXA+DyzdetazulUhXrPUhcveQWDKj4LewXuVu9v/+K1SIgS2Z4yOaw/rlax60z6BHhfqJHclVmPBrCJMFBk8XwhThPRQKBgQCqfLkummEhzHQMYjS7DffjtT1mdtPwZU8XJ4cZSfhTgNeCq9zXE9Cv4PvVeiJhsFkBOkUKYDff0y2TJ+CC4pGjKjDa9JyPU0GUrutlMRfAnFJI/mj1rZCknIL01Wy2k0u/1HtQ9stTJ/rXeLP96As+cssioai3pMsqGNIPKKRaYQKBgEuUEpOWCYQoZnKX2plt0FVvMhL5JzUbjmmdTM9K79PauQK7oqIsaEOoP6vGMVkWY3P4uDDnJtIklRGifSf9GTrY80VBY5kYwRgf7qLqEl4aQFEfmAM82gGNcIJkEw6R0QPxHB5B6nPuyT8gtlEtHYwf7goExb9xGt5Z4TN7oWW9AoGAJmFaeMAQZl6JDOrqsoRNXCgFh15yutpzUn9YI9egkVuYzNPKL3NFhau3nI9pCbOehzcq67j9DACaO3reZ9pJmSorCzsF6VVhaE9k07yozupCjPk40EFfElsFGBO1j/HPCDrNO07LcZ93L7U55y4OTNJlogSYc0vBeTe7eaYKvJo=
+  alipayPublicKey: |
+    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArHzsGEoo3TH0OGOILCC+Ud/1ZY4JzW9yuHjmFwzdXj4zLj0sguFo2cEUIMdhA1+V/HOs2cSdTJKyElTEiDI2IvsLYn6sPTvVkfbH34aqblTcUQEUs59IUK2YyUS/VVT85QJtfEJSqrGQ56qGkDQknJcbUl8q7g2wo67glAtzn6lsBrK+GanzB6XCyb+JE5yGVPSX72LaGYgkMWfLqrZ6ZyEznTTx+3iBJLHhTXH2mCqfvoq4q6CGxi52RrwQahlQkQdS5F3xAciPYQIb0QqK+QxYfcBcbeJ88RyU33EBsWLmfQnjgS7VZDEpn/i8kvwB6IgHnBmbljUPfLI8PraStQIDAQAB
+  notifyUrl: http://p8pn6x.natappfree.cc/api/payment/notify
+
+

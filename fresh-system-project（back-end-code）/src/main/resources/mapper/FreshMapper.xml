@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orion.mapper.FreshMapper">
+
+    <resultMap id="BaseResultMap" type="com.orion.pojo.Fresh">
+        <id property="id" column="id"/>
+
+        <!-- 显式映射所有基础字段 -->
+        <result property="freshName" column="fresh_name"/>
+        <result property="feature" column="feature"/>
+        <result property="description" column="description"/>
+        <result property="pictureAddress" column="picture_address"/>
+        <result property="prices" column="prices"/>
+        <result property="promotionPrice" column="promotion_price"/>
+        <result property="repertory" column="repertory"/>
+        <result property="sumRepertory" column="sum_repertory"/>
+        <result property="isRecommend" column="is_recommend"/>
+
+        <!-- 关联映射 -->
+        <association property="category" javaType="com.orion.pojo.Category">
+            <id property="id" column="category_id"/>
+            <result property="categoryName" column="category_name"/>
+        </association>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id
+        ,fresh_name,feature,
+        description,picture_address,prices,
+        promotion_price,repertory,sum_repertory,
+        is_recommend
+    </sql>
+
+    <!--分页查询生鲜-->
+    <select id="queryAll" resultMap="BaseResultMap">
+        select fresh.id,
+        fresh.picture_address,
+        fresh.fresh_name,
+        fresh.category_id,
+        category.category_name,
+        fresh.feature,
+        fresh.description,
+        fresh.prices,
+        fresh.promotion_price,
+        fresh.repertory,
+        fresh.sum_repertory,
+        fresh.is_recommend
+        from fresh left join category
+        on fresh.category_id = category.id
+        where fresh.is_deleted = 0
+        <if test="freshName != null and freshName !=''">
+            and fresh.fresh_name like '%${freshName}%'
+        </if>
+        <if test="categoryId != null">  <!-- 移除空字符串判断 -->
+            AND category_id = #{categoryId}
+        </if>
+        <if test="recommend != null">
+            and fresh.is_recommend = #{recommend}
+        </if>
+        order by fresh.update_time desc
+    </select>
+
+    <!--生鲜分类销量统计-->
+    <select id="selectFreshesSaleCount" resultType="java.util.Map">
+        select sum(f.sale_count) "value", c.category_name "name"
+        from (select id, fresh_name, category_id, sum_repertory - repertory as 'sale_count'
+              from fresh
+              where is_deleted = 0) f
+                 inner join category c
+                            on f.category_id = c.id
+        group by c.category_name;
+    </select>
+
+    <!--生鲜销量排行榜-->
+    <select id="selectSaleRank" resultType="java.util.Map">
+        select id,
+               fresh_name                "freshName",
+               feature,
+               description,
+               picture_address           "pictureAddress",
+               prices,
+               promotion_price           "promotionPrice",
+               is_recommend              "isRecommend",
+               sum_repertory - repertory "salecount"
+        from fresh_system.fresh
+        where is_deleted = 0
+        order by salecount desc limit 0,29
+    </select>
+
+    <!--推荐生鲜详情信息-->
+    <select id="selectByCount" resultType="com.orion.pojo.Fresh">
+        select
+        *,
+        category.id
+        from fresh
+        where is_deleted = 0 and is_recommend = 1
+    </select>
+
+
+    <update id="decreaseStock">
+        UPDATE fresh
+        SET repertory = repertory - #{count},
+            version = version + 1
+        WHERE id = #{freshId}
+          AND repertory >= #{count}
+          AND is_deleted = 0
+    </update>
+
+
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT
+        fresh.*,
+        category.id,
+        category.category_name
+        FROM fresh
+        LEFT JOIN category ON fresh.category_id = category.id
+        <where>
+            fresh.is_deleted = 0
+            <if test="freshName != null and freshName != ''">
+                AND fresh.fresh_name LIKE CONCAT('%', #{freshName}, '%')
+            </if>
+            <if test="categoryId != null">
+                AND fresh.category_id = #{categoryId}
+            </if>
+            <if test="recommend != null">
+                AND fresh.is_recommend = #{recommend}
+            </if>
+        </where>
+        ORDER BY fresh.id ASC
+    </select>
+
+    <select id="selectByRecommend" resultType="com.orion.pojo.Fresh">
+        SELECT * FROM fresh
+        WHERE is_recommend = 1
+          AND is_deleted = 0
+        ORDER BY id DESC
+    </select>
+
+    <select id="selectCategoriesByIds" resultType="string">
+        SELECT category_id FROM fresh
+        WHERE id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+</mapper>
